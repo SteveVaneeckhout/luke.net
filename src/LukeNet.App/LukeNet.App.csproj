@@ -5,7 +5,22 @@
     <RootNamespace>LukeNet.App</RootNamespace>
     <!-- Grid columns bind to plain records, reflection bindings keep the XAML simple. -->
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <Product>Luke.NET</Product>
+    <Description>A simple viewer for Lucene index files.</Description>
   </PropertyGroup>
+  <!-- "dotnet publish -r <rid>" produces a single self-contained executable that needs no .NET install. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+  <!-- Our symbols are embedded; keep the large native .pdb files of SkiaSharp / HarfBuzz out of the download. -->
+  <Target Name="ExcludeSymbolsFromPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />

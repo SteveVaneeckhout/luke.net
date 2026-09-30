@@ -18,6 +18,15 @@ It reads indexes written by Lucene / Lucene.NET 4.x. The index is opened read-on
 - **Search**: classic Lucene query syntax with a choice of analyzer and default field, and score explanations.
   Double-click a hit to open the document.
 
+## Download
+
+Ready-to-run builds for Windows, Linux and macOS are on the [Releases](../../releases) page. Each download is a
+single executable that needs no .NET installation: unpack it and run `LukeNet` (`LukeNet.exe` on Windows),
+optionally followed by the path of an index.
+
+The builds are not code signed, so Windows SmartScreen may ask for confirmation. On macOS remove the quarantine
+flag first: `xattr -d com.apple.quarantine LukeNet`.
+
 ## Build and run
 
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
@@ -28,11 +37,27 @@ dotnet run --project src/LukeNet.App -- /path/to/index # open an index directly
 dotnet test                                            # run the unit tests
 ```
 
-To produce a standalone executable, for example for Windows:
+To produce a single self-contained executable, pass a runtime identifier (`win-x64`, `win-arm64`, `linux-x64`,
+`osx-x64` or `osx-arm64`):
 
 ```sh
-dotnet publish src/LukeNet.App -c Release -r win-x64 --self-contained
+dotnet publish src/LukeNet.App -c Release -r win-x64 -o publish
 ```
+
+## Releases
+
+The [Build](.github/workflows/build.yml) workflow builds and tests every push and pull request. It attaches the
+executables for all platforms to the workflow run as downloadable artifacts.
+
+To publish a release, push a version tag:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow then creates a GitHub release named after the tag, with generated release notes and a zip (Windows) or
+tar.gz (Linux, macOS) per platform. Tags with a suffix, such as `v1.1.0-beta.1`, are marked as pre-releases.
 
 ## Project layout
 
