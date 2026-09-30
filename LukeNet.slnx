@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LukeNet.App/LukeNet.App.csproj" />
+    <Project Path="src/LukeNet.Core/LukeNet.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LukeNet.Core.Tests/LukeNet.Core.Tests.csproj" />
+  </Folder>
+</Solution>

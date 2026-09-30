@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>LukeNet</AssemblyName>
+    <RootNamespace>LukeNet.App</RootNamespace>
+    <!-- Grid columns bind to plain records, reflection bindings keep the XAML simple. -->
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../LukeNet.Core/LukeNet.Core.csproj" />
+  </ItemGroup>
+</Project>
