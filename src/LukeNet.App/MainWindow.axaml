@@ -1,0 +1,186 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="using:LukeNet.App"
+        x:Class="LukeNet.App.MainWindow"
+        Title="Luke.NET - Lucene index viewer"
+        Width="1150" Height="760" MinWidth="700" MinHeight="450">
+
+  <Window.Styles>
+    <Style Selector="TextBlock.label">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+    </Style>
+    <Style Selector="TextBlock.header">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,8,0,4" />
+    </Style>
+    <Style Selector="StackPanel.toolbar">
+      <Setter Property="Orientation" Value="Horizontal" />
+      <Setter Property="Spacing" Value="6" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    <Style Selector="DataGrid">
+      <Setter Property="IsReadOnly" Value="True" />
+      <Setter Property="GridLinesVisibility" Value="Horizontal" />
+      <Setter Property="CanUserResizeColumns" Value="True" />
+      <Setter Property="CanUserSortColumns" Value="True" />
+      <Setter Property="SelectionMode" Value="Single" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+    <!-- Index selection -->
+    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="10,10,10,6">
+      <TextBlock Classes="label" Text="Index directory:" />
+      <TextBox Grid.Column="1" x:Name="PathBox" PlaceholderText="Path to a Lucene index directory" KeyDown="OnPathKeyDown" />
+      <Button Grid.Column="2" Content="Browse…" Margin="6,0,0,0" Click="OnBrowseClick" />
+      <Button Grid.Column="3" Content="Open" Margin="6,0,0,0" Classes="accent" Click="OnOpenClick" />
+      <Button Grid.Column="4" x:Name="CloseButton" Content="Close" Margin="6,0,0,0" IsEnabled="False" Click="OnCloseClick" />
+    </Grid>
+
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="10,4" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+      <TextBlock x:Name="StatusText" Text="Open an index to start." TextTrimming="CharacterEllipsis" />
+    </Border>
+
+    <TabControl x:Name="Tabs" Margin="6,0" IsEnabled="False">
+
+      <!-- Overview -->
+      <TabItem Header="Overview">
+        <Grid ColumnDefinitions="340,6,*" Margin="4">
+          <ScrollViewer>
+            <StackPanel>
+              <TextBlock Classes="header" Text="Index" Margin="0,0,0,4" />
+              <ItemsControl x:Name="OverviewItems">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="130,*" Margin="0,2">
+                      <TextBlock Text="{Binding Key}" Opacity="0.7" />
+                      <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Classes="header" Text="Commit files" />
+              <SelectableTextBlock x:Name="FilesText" FontFamily="{DynamicResource MonospaceFont}" FontSize="12" TextWrapping="Wrap" />
+            </StackPanel>
+          </ScrollViewer>
+          <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+          <Grid Grid.Column="2" RowDefinitions="Auto,2*,Auto,*">
+            <TextBlock Classes="header" Text="Fields" Margin="0,0,0,4" />
+            <DataGrid Grid.Row="1" x:Name="FieldsGrid">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                <DataGridTextColumn Header="Indexed" Binding="{Binding Indexed, Mode=OneWay, Converter={x:Static app:YesConverter.Instance}}" />
+                <DataGridTextColumn Header="Index options" Binding="{Binding IndexOptions}" />
+                <DataGridTextColumn Header="Terms" Binding="{Binding TermCount}" />
+                <DataGridTextColumn Header="Docs" Binding="{Binding DocCount}" />
+                <DataGridTextColumn Header="Norms" Binding="{Binding HasNorms, Mode=OneWay, Converter={x:Static app:YesConverter.Instance}}" />
+                <DataGridTextColumn Header="Vectors" Binding="{Binding HasTermVectors, Mode=OneWay, Converter={x:Static app:YesConverter.Instance}}" />
+                <DataGridTextColumn Header="Payloads" Binding="{Binding HasPayloads, Mode=OneWay, Converter={x:Static app:YesConverter.Instance}}" />
+                <DataGridTextColumn Header="Doc values" Binding="{Binding DocValues}" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Grid.Row="2" Classes="header" Text="Segments" />
+            <DataGrid Grid.Row="3" x:Name="SegmentsGrid">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                <DataGridTextColumn Header="Docs" Binding="{Binding DocCount}" />
+                <DataGridTextColumn Header="Deleted" Binding="{Binding DeletedDocs}" />
+                <DataGridTextColumn Header="Size" Binding="{Binding SizeInBytes, Mode=OneWay, Converter={x:Static app:ByteSizeConverter.Instance}}" />
+                <DataGridTextColumn Header="Codec" Binding="{Binding Codec}" />
+                <DataGridTextColumn Header="Lucene version" Binding="{Binding LuceneVersion}" />
+                <DataGridTextColumn Header="Compound" Binding="{Binding CompoundFile, Mode=OneWay, Converter={x:Static app:YesConverter.Instance}}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <!-- Documents -->
+      <TabItem Header="Documents">
+        <Grid RowDefinitions="Auto,Auto,*,6,120" Margin="4">
+          <StackPanel Classes="toolbar">
+            <TextBlock Classes="label" Text="Document #" />
+            <NumericUpDown x:Name="DocIdBox" Minimum="0" Maximum="0" Increment="1" FormatString="0" Width="160" ValueChanged="OnDocIdChanged" />
+            <Button Content="|&lt;" ToolTip.Tip="First document" Click="OnFirstDocClick" />
+            <Button Content="&lt;" ToolTip.Tip="Previous document" Click="OnPrevDocClick" />
+            <Button Content="&gt;" ToolTip.Tip="Next document" Click="OnNextDocClick" />
+            <Button Content="&gt;|" ToolTip.Tip="Last document" Click="OnLastDocClick" />
+            <TextBlock x:Name="DocInfoText" Classes="label" Margin="10,0,0,0" />
+          </StackPanel>
+          <TextBlock Grid.Row="1" x:Name="FlagsLegendText" Margin="0,0,0,6" Opacity="0.7" FontSize="12" TextWrapping="Wrap" />
+          <DataGrid Grid.Row="2" x:Name="DocumentGrid" SelectionChanged="OnDocumentFieldSelected">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Field" Binding="{Binding Name}" />
+              <DataGridTextColumn Header="Flags" Binding="{Binding Flags}" FontFamily="{DynamicResource MonospaceFont}" />
+              <DataGridTextColumn Header="Kind" Binding="{Binding Kind}" />
+              <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
+            </DataGrid.Columns>
+          </DataGrid>
+          <GridSplitter Grid.Row="3" ResizeDirection="Rows" />
+          <TextBox Grid.Row="4" x:Name="FieldValueBox" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                   PlaceholderText="Select a field to see its full value" />
+        </Grid>
+      </TabItem>
+
+      <!-- Terms -->
+      <TabItem Header="Terms">
+        <Grid RowDefinitions="Auto,Auto,*" Margin="4">
+          <StackPanel Classes="toolbar">
+            <TextBlock Classes="label" Text="Field" />
+            <ComboBox x:Name="TermFieldBox" MinWidth="200" />
+            <TextBlock Classes="label" Text="Count" Margin="10,0,6,0" />
+            <NumericUpDown x:Name="TermCountBox" Minimum="1" Maximum="100000" Value="50" Increment="10" FormatString="0" Width="130" />
+            <Button Content="Top terms" Classes="accent" Click="OnTopTermsClick" ToolTip.Tip="Terms with the highest document frequency" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Classes="toolbar">
+            <TextBlock Classes="label" Text="Start at" />
+            <TextBox x:Name="TermStartBox" Width="260" PlaceholderText="(first term)" KeyDown="OnTermStartKeyDown" />
+            <Button Content="Browse terms" Click="OnBrowseTermsClick" ToolTip.Tip="Terms of the selected field in index order" />
+            <TextBlock Classes="label" Margin="10,0,0,0" Opacity="0.7" Text="Double-click a term to find the documents containing it." />
+          </StackPanel>
+          <DataGrid Grid.Row="2" x:Name="TermsGrid" DoubleTapped="OnTermDoubleTapped">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Field" Binding="{Binding Field}" />
+              <DataGridTextColumn Header="Term" Binding="{Binding Text}" Width="*" />
+              <DataGridTextColumn Header="Doc freq" Binding="{Binding DocFreq}" />
+              <DataGridTextColumn Header="Total term freq" Binding="{Binding TotalTermFreq}" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </Grid>
+      </TabItem>
+
+      <!-- Search -->
+      <TabItem Header="Search">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,6,150" Margin="4">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+            <TextBox x:Name="QueryBox" PlaceholderText="Query, e.g. title:lucene AND body:&quot;index viewer&quot; or *:*" KeyDown="OnQueryKeyDown" />
+            <Button Grid.Column="1" Content="Search" Classes="accent" Margin="6,0,0,0" Click="OnSearchClick" />
+          </Grid>
+          <StackPanel Grid.Row="1" Classes="toolbar">
+            <TextBlock Classes="label" Text="Default field" />
+            <ComboBox x:Name="DefaultFieldBox" MinWidth="180" />
+            <TextBlock Classes="label" Text="Analyzer" Margin="10,0,6,0" />
+            <ComboBox x:Name="AnalyzerBox" MinWidth="130" />
+            <TextBlock Classes="label" Text="Max hits" Margin="10,0,6,0" />
+            <NumericUpDown x:Name="MaxHitsBox" Minimum="1" Maximum="100000" Value="100" Increment="10" FormatString="0" Width="130" />
+            <Button x:Name="ExplainButton" Content="Explain" IsEnabled="False" Click="OnExplainClick" ToolTip.Tip="Explain the score of the selected hit" />
+          </StackPanel>
+          <SelectableTextBlock Grid.Row="2" x:Name="SearchInfoText" Margin="0,0,0,6" TextWrapping="Wrap" />
+          <DataGrid Grid.Row="3" x:Name="HitsGrid" DoubleTapped="OnHitDoubleTapped" SelectionChanged="OnHitSelected">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Doc" Binding="{Binding DocId}" />
+              <DataGridTextColumn Header="Score" Binding="{Binding Score, StringFormat={}{0:0.####}}" />
+              <DataGridTextColumn Header="Stored fields" Binding="{Binding Summary}" Width="*" />
+            </DataGrid.Columns>
+          </DataGrid>
+          <GridSplitter Grid.Row="4" ResizeDirection="Rows" />
+          <TextBox Grid.Row="5" x:Name="ExplainBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                   FontFamily="{DynamicResource MonospaceFont}" FontSize="12"
+                   PlaceholderText="Double-click a hit to open the document, or select one and press Explain." />
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>
