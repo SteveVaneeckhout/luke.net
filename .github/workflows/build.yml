@@ -21,8 +21,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - run: dotnet test -c Release
@@ -45,8 +45,8 @@ jobs:
             os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -84,27 +84,41 @@ jobs:
             tar -czf "$name.tar.gz" LukeNet
             echo "file=publish/$name.tar.gz" >> "$GITHUB_OUTPUT"
           fi
-          echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/upload-artifact@v4
+      # Upload the zip / tar.gz as-is, so the download is not wrapped in another zip.
+      - uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.package.outputs.name }}
           path: ${{ steps.package.outputs.file }}
+          archive: false
           if-no-files-found: error
 
+  # Collects and checks the downloads on every run; only a v* tag publishes them as a release.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
+          skip-decompress: true
+
+      - name: Check downloads
+        run: |
+          ls -l dist
+          for rid in win-x64 win-arm64 linux-x64 osx-x64 osx-arm64; do
+            file=$(ls dist/LukeNet-*-"$rid".* 2>/dev/null || true)
+            case "$file" in
+              *.zip) unzip -tq "$file" ;;
+              *.tar.gz) tar -tzf "$file" > /dev/null ;;
+              *) echo "::error::Missing download for $rid"; exit 1 ;;
+            esac
+          done
 
       - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
